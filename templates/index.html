@@ -1,0 +1,206 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Crew Indemnisation</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+    <script src="{{ url_for('static', filename='script.js') }}"></script>
+</head>
+<body>
+
+        <header>
+            <div class="container">
+                <h1>Analyseur de Journal de Vol</h1>
+            </div>
+        </header>
+
+        <div class="container">
+            <!-- Onglets -->
+            <div class="tabs">
+                <button class="tab-button active" data-tab="tab-main">Traitement</button>
+                <button class="tab-button" data-tab="tab-config">Configuration</button>
+            </div>
+
+            <!-- Contenu de l'onglet principal -->
+            <div id="tab-main" class="tab-content active">
+                <!-- Selection des fichiers -->
+                <div class="panel">
+                    <div class="panel-header">Selection des fichiers</div>
+                    <div class="panel-body">
+                        <div class="form-group">
+                            <label for="file-excel">Fichier journal de vol:</label>
+                            <div class="file-input">
+                                <label class="file-input-label">
+                                    <input type="file" id="file-excel" accept=".xlsx,.xls" style="display:none;">
+                                    Parcourir...
+                                </label>
+                                <span id="file-excel-name" class="file-input-text">Aucun fichier selectionne</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Actions -->
+                <div class="panel">
+                    <div class="panel-header">Actions</div>
+                    <div class="panel-body">
+                        <button id="btn-process" class="btn btn-primary" disabled>Traiter le fichier</button>
+                        <button id="btn-manage-prices" class="btn btn-secondary">Gerer les prix par pays</button>
+                        <button id="btn-export" class="btn btn-secondary">Exporter les resultats</button>
+                    </div>
+                </div>
+
+                <!-- Resultats -->
+                <div class="panel">
+                    <div class="panel-header">Resultats</div>
+                    <div class="panel-body">
+                        <div class="tabs">
+                            <button class="tab-button active" data-tab="tab-summary">Resume</button>
+                            <button class="tab-button" data-tab="tab-details">Details des rotations</button>
+                        </div>
+
+                        <!-- Resume -->
+                        <div id="tab-summary" class="tab-content active">
+                            <div id="results-text" class="results-area">
+                                <p>Les resultats s afficheront ici apres le traitement du fichier.</p>
+                            </div>
+                        </div>
+
+                        <!-- Details des rotations -->
+                        <div id="tab-details" class="tab-content">
+                            <div id="tree-rotations" class="tree-view">
+                                <!-- Les rotations seront ajoutees ici dynamiquement -->
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Contenu de l'onglet configuration -->
+            <div id="tab-config" class="tab-content">
+                <!-- Configuration des bases -->
+                <div class="panel">
+                    <div class="panel-header">Bases</div>
+                    <div class="panel-body">
+                        <div class="form-group">
+                            <label for="bases-text">Bases de reference:</label>
+                            <textarea id="bases-text">LFLB, LFLY, LFLP, LFLS, LSGG</textarea>
+                        </div>
+                        <button id="btn-add-base" class="btn btn-secondary">Ajouter base</button>
+                        <button id="btn-remove-base" class="btn btn-secondary">Supprimer selection</button>
+                    </div>
+                </div>
+
+                <!-- Fichiers de configuration -->
+                <div class="panel">
+                    <div class="panel-header">Fichiers de configuration</div>
+                    <div class="panel-body">
+                        <div class="form-group">
+                            <label for="file-oaci">Fichier OACI/Pays</label>
+                            <div class="file-input">
+                                <label class="file-input-label">
+                                    <input type="file" id="file-oaci" accept=".xlsx,.xls" style="display:none;">
+                                    Parcourir...
+                                </label>
+                                <span id="file-oaci-name" class="file-input-text">doc/Country-OACI-Code.xlsx</span>
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            <label for="file-airports">Fichier aeroports</label>
+                            <div class="file-input">
+                                <label class="file-input-label">
+                                    <input type="file" id="file-airports" accept=".csv" style="display:none;">
+                                    Parcourir...
+                                </label>
+                                <span id="file-airports-name" class="file-input-text">doc/airports.csv</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <button id="btn-save-config" class="btn btn-primary">Sauvegarder la configuration</button>
+            </div>
+        </div>
+
+        <!-- Modal pour la gestion des prix par pays -->
+        <div id="modal-prices" class="modal">
+            <div class="modal-content">
+                <span class="close-modal">&times;</span>
+                <h2>Gestion des prix par pays</h2>
+                <div id="countries-table-container">
+                    <table id="countries-table" class="flight-table">
+                        <thead>
+                            <tr>
+                                <th>Pays</th>
+                                <th>Code OACI</th>
+                                <th>Prix</th>
+                                <th>Action</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <!-- Les pays seront ajoutes ici dynamiquement -->
+                        </tbody>
+                    </table>
+                </div>
+                <div class="panel-body">
+                    <button id="btn-save-prices" class="btn btn-primary">Sauvegarder</button>
+                    <button id="btn-close-prices" class="btn btn-secondary">Fermer</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Modal pour les details de rotation -->
+        <div id="modal-rotation-details" class="modal">
+            <div class="modal-content">
+                <span class="close-modal">&times;</span>
+                <h2>Details de la rotation</h2>
+                <div id="rotation-details-content">
+                    <!-- Les details seront ajoutes ici dynamiquement -->
+                </div>
+                <div class="panel-body">
+                    <button id="btn-close-details" class="btn btn-secondary">Fermer</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Modal pour l'ajout de base -->
+        <div id="modal-add-base" class="modal">
+            <div class="modal-content">
+                <span class="close-modal">&times;</span>
+                <h2>Ajouter une base</h2>
+                <div class="form-group">
+                    <label for="input-base-code">Code OACI de la base:</label>
+                    <input type="text" id="input-base-code" class="form-control" placeholder="Entrez le code OACI (4 lettres)">
+                </div>
+                <div class="panel-body">
+                    <button id="btn-confirm-add-base" class="btn btn-primary">Ajouter</button>
+                    <button id="btn-cancel-add-base" class="btn btn-secondary">Annuler</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Modal pour la modification de prix -->
+        <div id="modal-edit-price" class="modal">
+            <div class="modal-content">
+                <span class="close-modal">&times;</span>
+                <h2>Modifier le prix</h2>
+                <div class="form-group">
+                    <label for="input-country-name">Pays:</label>
+                    <input type="text" id="input-country-name" class="form-control" readonly>
+                </div>
+                <div class="form-group">
+                    <label for="input-price">Prix:</label>
+                    <input type="number" id="input-price" class="form-control" step="0.01" min="0">
+                </div>
+                <div class="panel-body">
+                    <button id="btn-confirm-edit-price" class="btn btn-primary">Modifier</button>
+                    <button id="btn-cancel-edit-price" class="btn btn-secondary">Annuler</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Barre de statut -->
+        <div class="status-bar" id="status-bar">Pret</div>
+    </body>
+</html>
