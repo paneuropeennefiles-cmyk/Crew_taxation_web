@@ -18,7 +18,7 @@ from .database import (
     update_price, duplicate_prices_for_year, get_countries,
     import_airports_from_new_txt, search_airports, get_all_countries,
     add_airport_manual, get_prices_periods_by_year, add_price_period,
-    get_db_connection, init_database
+    get_db_connection, init_database, init_data_if_empty
 )
 from .crew_taxation_logic import (
     parse_flight_log, identifier_rotations, calcul_indemnites_par_rotation,
@@ -40,6 +40,9 @@ os.makedirs(app.config['UPLOAD_FOLDER'], exist_ok=True)
 
 # Initialiser la base de données au démarrage
 init_database()
+
+# Importer les données initiales si la base est vide
+init_data_if_empty()
 
 # Variable globale pour stocker les résultats du traitement
 df_resultats = None

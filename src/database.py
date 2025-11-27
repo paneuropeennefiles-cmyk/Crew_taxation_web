@@ -1018,6 +1018,64 @@ def add_airport_manual(icao_code, iata_code, name, country, airport_type='AD', l
         return False, f"Erreur lors de l'ajout: {str(e)}"
 
 
+def init_data_if_empty():
+    """
+    Initialise les données de la base si elle est vide
+    Appelé automatiquement au démarrage de l'application
+    """
+    import json
+
+    conn = get_db_connection()
+    cursor = conn.cursor()
+
+    # Vérifier si les données existent déjà
+    cursor.execute('SELECT COUNT(*) FROM airports')
+    airports_count = cursor.fetchone()[0]
+
+    cursor.execute('SELECT COUNT(*) FROM countries')
+    countries_count = cursor.fetchone()[0]
+
+    conn.close()
+
+    # Si la base contient déjà des données, ne rien faire
+    if airports_count > 0 and countries_count > 0:
+        print(f"[INFO] Base de données déjà initialisée ({airports_count} aéroports, {countries_count} pays)")
+        return
+
+    print("=== Initialisation des données ===")
+
+    # Chemins des fichiers source (relatifs au module database.py)
+    script_dir = os.path.dirname(os.path.abspath(__file__))
+    doc_dir = os.path.join(os.path.dirname(script_dir), 'doc')
+
+    # Import des aéroports depuis les fichiers .txt
+    airport_eu_txt = os.path.join(doc_dir, 'Airport EU.txt')
+    airport_africa_txt = os.path.join(doc_dir, 'Airport Africa.txt')
+    countries_excel = os.path.join(doc_dir, 'Country-OACI-Code.xlsx')
+
+    # Importer les aéroports européens
+    if os.path.exists(airport_eu_txt):
+        print("[INFO] Import des aéroports européens...")
+        import_airports_from_new_txt(airport_eu_txt, clear_existing=False)
+
+    # Importer les aéroports africains
+    if os.path.exists(airport_africa_txt):
+        print("[INFO] Import des aéroports africains...")
+        import_airports_from_new_txt(airport_africa_txt, clear_existing=False)
+
+    # Importer les pays et prix
+    if os.path.exists(countries_excel):
+        print("[INFO] Import des pays et prix...")
+        import_countries_from_excel(countries_excel, year=2024)
+
+    # Définir la configuration par défaut
+    print("[INFO] Configuration par défaut...")
+    bases_default = ['LFLB', 'LFLS', 'LFLY', 'LSGG', 'LFLP']
+    set_config('bases', json.dumps(bases_default))
+
+    print("=== Initialisation des données terminée ===\n")
+
+
 if __name__ == '__main__':
     """Script d'initialisation de la base de données"""
     print("=== Initialisation de la base de données ===\n")
