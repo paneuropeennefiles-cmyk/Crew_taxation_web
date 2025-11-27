@@ -1,0 +1,14 @@
+services:
+  - type: web
+    name: crew-taxation-web
+    env: python
+    region: frankfurt  # Europe - Plus proche de vous
+    plan: free
+    branch: master
+    buildCommand: "pip install -r requirements.txt"
+    startCommand: "gunicorn --bind 0.0.0.0:$PORT src.app:app"
+    envVars:
+      - key: PYTHON_VERSION
+        value: 3.11.0
+      - key: PORT
+        generateValue: true

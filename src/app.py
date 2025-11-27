@@ -18,7 +18,7 @@ from .database import (
     update_price, duplicate_prices_for_year, get_countries,
     import_airports_from_new_txt, search_airports, get_all_countries,
     add_airport_manual, get_prices_periods_by_year, add_price_period,
-    get_db_connection
+    get_db_connection, init_database
 )
 from .crew_taxation_logic import (
     parse_flight_log, identifier_rotations, calcul_indemnites_par_rotation,
@@ -37,6 +37,9 @@ app.config['MAX_CONTENT_LENGTH'] = 16 * 1024 * 1024  # 16 MB max
 
 # Créer le dossier uploads s'il n'existe pas
 os.makedirs(app.config['UPLOAD_FOLDER'], exist_ok=True)
+
+# Initialiser la base de données au démarrage
+init_database()
 
 # Variable globale pour stocker les résultats du traitement
 df_resultats = None
