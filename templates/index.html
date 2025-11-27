@@ -19,7 +19,9 @@
             <!-- Onglets -->
             <div class="tabs">
                 <button class="tab-button active" data-tab="tab-main">Traitement</button>
-                <button class="tab-button" data-tab="tab-config">Configuration</button>
+                <button class="tab-button" data-tab="tab-prices">Prix / Pays</button>
+                <button class="tab-button" data-tab="tab-airports">Aéroports</button>
+                <button class="tab-button" data-tab="tab-config">Bases</button>
             </div>
 
             <!-- Contenu de l'onglet principal -->
@@ -29,14 +31,31 @@
                     <div class="panel-header">Selection des fichiers</div>
                     <div class="panel-body">
                         <div class="form-group">
-                            <label for="file-excel">Fichier journal de vol:</label>
+                            <label for="file-excel">Fichier journal de vol (.xlsx, .xls, .csv):</label>
                             <div class="file-input">
                                 <label class="file-input-label">
-                                    <input type="file" id="file-excel" accept=".xlsx,.xls" style="display:none;">
+                                    <input type="file" id="file-excel" accept=".xlsx,.xls,.csv" style="display:none;">
                                     Parcourir...
                                 </label>
                                 <span id="file-excel-name" class="file-input-text">Aucun fichier selectionne</span>
                             </div>
+                        </div>
+
+                        <!-- Note d'information pour l'export Léon -->
+                        <div class="notification info" style="margin-top: 15px; margin-bottom: 15px;">
+                            <strong>ℹ️ Comment obtenir le fichier journal de vol :</strong><br/>
+                            Dans <strong>Léon</strong>, utilisez l'export <strong>"Logbook Export"</strong> au format <strong>"Export to CrewLounge"</strong>.<br/>
+                            <a href="https://pea.leon.aero/client/#/App/old/report_logbook_export/1764261463" target="_blank" style="color: #0c5460; text-decoration: underline;">
+                                📋 Accéder à l'export Léon
+                            </a>
+                        </div>
+
+                        <!-- Sélecteur d'année pour le traitement -->
+                        <div class="form-group">
+                            <label for="select-year">Année des prix à utiliser:</label>
+                            <select id="select-year" class="form-control">
+                                <!-- Les années seront ajoutées dynamiquement -->
+                            </select>
                         </div>
                     </div>
                 </div>
@@ -46,8 +65,8 @@
                     <div class="panel-header">Actions</div>
                     <div class="panel-body">
                         <button id="btn-process" class="btn btn-primary" disabled>Traiter le fichier</button>
-                        <button id="btn-manage-prices" class="btn btn-secondary">Gerer les prix par pays</button>
                         <button id="btn-export" class="btn btn-secondary">Exporter les resultats</button>
+                        <button id="btn-export-pdf" class="btn btn-secondary" style="margin-left: 10px;">📄 Exporter PDF</button>
                     </div>
                 </div>
 
@@ -69,6 +88,39 @@
 
                         <!-- Details des rotations -->
                         <div id="tab-details" class="tab-content">
+                            <!-- Filtres -->
+                            <div class="panel-body" style="background-color: #f8f8f8; margin-bottom: 15px; padding: 15px; border-radius: 5px;">
+                                <h4 style="margin-top: 0;">Filtres</h4>
+                                <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 10px;">
+                                    <div class="form-group" style="margin-bottom: 0;">
+                                        <label for="filter-rotation">Rotation ID:</label>
+                                        <input type="text" id="filter-rotation" class="form-control" placeholder="ex: ROT001">
+                                    </div>
+                                    <div class="form-group" style="margin-bottom: 0;">
+                                        <label for="filter-date-from">Date début:</label>
+                                        <input type="date" id="filter-date-from" class="form-control">
+                                    </div>
+                                    <div class="form-group" style="margin-bottom: 0;">
+                                        <label for="filter-date-to">Date fin:</label>
+                                        <input type="date" id="filter-date-to" class="form-control">
+                                    </div>
+                                    <div class="form-group" style="margin-bottom: 0;">
+                                        <label for="filter-base">Base:</label>
+                                        <input type="text" id="filter-base" class="form-control" placeholder="ex: LFLB">
+                                    </div>
+                                    <div class="form-group" style="margin-bottom: 0;">
+                                        <label for="filter-min-amount">Montant min (EUR):</label>
+                                        <input type="number" id="filter-min-amount" class="form-control" step="0.01" min="0">
+                                    </div>
+                                    <div style="display: flex; align-items: flex-end;">
+                                        <button id="btn-apply-filters" class="btn btn-primary" style="width: 100%;">Appliquer</button>
+                                    </div>
+                                    <div style="display: flex; align-items: flex-end;">
+                                        <button id="btn-reset-filters" class="btn btn-secondary" style="width: 100%;">Réinitialiser</button>
+                                    </div>
+                                </div>
+                            </div>
+
                             <div id="tree-rotations" class="tree-view">
                                 <!-- Les rotations seront ajoutees ici dynamiquement -->
                             </div>
@@ -77,14 +129,57 @@
                 </div>
             </div>
 
-            <!-- Contenu de l'onglet configuration -->
+            <!-- Contenu de l'onglet Prix / Pays -->
+            <div id="tab-prices" class="tab-content">
+                <div class="panel">
+                    <div class="panel-header">Gestion des prix par pays</div>
+                    <div class="panel-body">
+                        <!-- Sélecteur d'année et actions -->
+                        <div style="display: flex; gap: 10px; align-items: center; flex-wrap: wrap; margin-bottom: 15px;">
+                            <label for="select-year-prices-tab" style="font-weight: bold;">Année:</label>
+                            <select id="select-year-prices-tab" class="form-control" style="width: 120px;">
+                                <!-- Les années seront ajoutées dynamiquement -->
+                            </select>
+
+                            <button id="btn-duplicate-year-tab" class="btn btn-secondary">Dupliquer vers nouvelle année</button>
+                            <button id="btn-import-pdf-tab" class="btn btn-primary">📄 Importer PDF Barèmes</button>
+                            <button id="btn-import-prices-tab" class="btn btn-secondary">Importer depuis Excel</button>
+                            <button id="btn-export-prices-tab" class="btn btn-secondary">Exporter vers Excel</button>
+                        </div>
+
+                        <!-- Recherche -->
+                        <div class="form-group" style="margin-bottom: 15px;">
+                            <input type="text" id="search-country-price-tab" class="form-control" placeholder="🔍 Rechercher un pays...">
+                        </div>
+
+                        <div id="countries-table-container-tab" style="max-height: 600px; overflow-y: auto;">
+                            <table id="countries-table-tab" class="data-table">
+                                <thead style="position: sticky; top: 0; background: white;">
+                                    <tr>
+                                        <th>Pays</th>
+                                        <th>Code OACI</th>
+                                        <th>Zone</th>
+                                        <th>Prix / Périodes</th>
+                                        <th>Actions</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <!-- Les pays seront ajoutés ici dynamiquement -->
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Contenu de l'onglet Bases -->
             <div id="tab-config" class="tab-content">
                 <!-- Configuration des bases -->
                 <div class="panel">
-                    <div class="panel-header">Bases</div>
+                    <div class="panel-header">Bases de référence</div>
                     <div class="panel-body">
                         <div class="form-group">
-                            <label for="bases-text">Bases de reference:</label>
+                            <label for="bases-text">Bases de référence:</label>
                             <textarea id="bases-text">LFLB, LFLY, LFLP, LFLS, LSGG</textarea>
                         </div>
                         <button id="btn-add-base" class="btn btn-secondary">Ajouter base</button>
@@ -92,34 +187,76 @@
                     </div>
                 </div>
 
-                <!-- Fichiers de configuration -->
+                <button id="btn-save-config" class="btn btn-primary">Sauvegarder la configuration</button>
+            </div>
+
+            <!-- Contenu de l'onglet Aéroports -->
+            <div id="tab-airports" class="tab-content">
+                <!-- Recherche et filtres -->
                 <div class="panel">
-                    <div class="panel-header">Fichiers de configuration</div>
+                    <div class="panel-header">Rechercher des aéroports</div>
                     <div class="panel-body">
-                        <div class="form-group">
-                            <label for="file-oaci">Fichier OACI/Pays</label>
-                            <div class="file-input">
-                                <label class="file-input-label">
-                                    <input type="file" id="file-oaci" accept=".xlsx,.xls" style="display:none;">
-                                    Parcourir...
-                                </label>
-                                <span id="file-oaci-name" class="file-input-text">doc/Country-OACI-Code.xlsx</span>
+                        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 10px; margin-bottom: 15px;">
+                            <div class="form-group" style="margin-bottom: 0;">
+                                <label for="search-airport">Recherche (ICAO, IATA, Nom):</label>
+                                <input type="text" id="search-airport" class="form-control" placeholder="ex: LFPG">
+                            </div>
+                            <div class="form-group" style="margin-bottom: 0;">
+                                <label for="filter-airport-country">Pays:</label>
+                                <input type="text" id="filter-airport-country" class="form-control" placeholder="ex: FRANCE">
+                            </div>
+                            <div class="form-group" style="margin-bottom: 0;">
+                                <label for="filter-airport-type">Type:</label>
+                                <select id="filter-airport-type" class="form-control">
+                                    <option value="">Tous</option>
+                                    <option value="AD">AD - Aérodrome</option>
+                                    <option value="HP">HP - Héliport</option>
+                                    <option value="LS">LS - Piste</option>
+                                    <option value="CA">CA - Aviation légère</option>
+                                </select>
                             </div>
                         </div>
-                        <div class="form-group">
-                            <label for="file-airports">Fichier aeroports</label>
-                            <div class="file-input">
-                                <label class="file-input-label">
-                                    <input type="file" id="file-airports" accept=".csv" style="display:none;">
-                                    Parcourir...
-                                </label>
-                                <span id="file-airports-name" class="file-input-text">doc/airports.csv</span>
-                            </div>
-                        </div>
+                        <button id="btn-search-airports" class="btn btn-primary">Rechercher</button>
+                        <button id="btn-reset-search" class="btn btn-secondary">Réinitialiser</button>
+                        <button id="btn-add-airport-manual" class="btn btn-primary" style="margin-left: 10px;">Ajouter un aéroport</button>
+                        <button id="btn-import-airports-modal" class="btn btn-secondary" style="margin-left: 10px;">Importer des aéroports</button>
                     </div>
                 </div>
 
-                <button id="btn-save-config" class="btn btn-primary">Sauvegarder la configuration</button>
+                <!-- Résultats -->
+                <div class="panel">
+                    <div class="panel-header">
+                        Résultats
+                        <span id="airports-count" style="font-weight: normal; margin-left: 10px;"></span>
+                    </div>
+                    <div class="panel-body">
+                        <div id="airports-table-container" style="overflow-x: auto;">
+                            <table id="airports-table" class="data-table">
+                                <thead>
+                                    <tr>
+                                        <th>Code ICAO</th>
+                                        <th>Code IATA</th>
+                                        <th>Nom</th>
+                                        <th>Pays</th>
+                                        <th>Type</th>
+                                        <th>Latitude</th>
+                                        <th>Longitude</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="airports-table-body">
+                                    <!-- Les résultats seront ajoutés ici -->
+                                </tbody>
+                            </table>
+                        </div>
+
+                        <!-- Pagination -->
+                        <div id="airports-pagination" style="display: flex; justify-content: center; align-items: center; gap: 10px; margin-top: 15px;">
+                            <button id="btn-prev-page" class="btn btn-secondary" disabled>← Précédent</button>
+                            <span id="page-info">Page 1</span>
+                            <button id="btn-next-page" class="btn btn-secondary">Suivant →</button>
+                        </div>
+                    </div>
+                </div>
             </div>
         </div>
 
@@ -128,14 +265,36 @@
             <div class="modal-content">
                 <span class="close-modal">&times;</span>
                 <h2>Gestion des prix par pays</h2>
-                <div id="countries-table-container">
+
+                <!-- Sélecteur d'année et actions -->
+                <div class="panel-body" style="background-color: #f8f8f8; margin-bottom: 15px; padding: 15px; border-radius: 5px;">
+                    <div style="display: flex; gap: 10px; align-items: center; flex-wrap: wrap;">
+                        <label for="select-year-prices" style="font-weight: bold;">Année:</label>
+                        <select id="select-year-prices" class="form-control" style="width: 120px;">
+                            <!-- Les années seront ajoutées dynamiquement -->
+                        </select>
+
+                        <button id="btn-duplicate-year" class="btn btn-secondary">Dupliquer vers nouvelle année</button>
+                        <button id="btn-import-pdf" class="btn btn-primary">📄 Importer PDF Barèmes</button>
+                        <button id="btn-import-prices" class="btn btn-secondary">Importer depuis Excel</button>
+                        <button id="btn-export-prices" class="btn btn-secondary">Exporter vers Excel</button>
+                    </div>
+                </div>
+
+                <!-- Recherche -->
+                <div class="form-group" style="margin-bottom: 15px;">
+                    <input type="text" id="search-country-price" class="form-control" placeholder="🔍 Rechercher un pays...">
+                </div>
+
+                <div id="countries-table-container" style="max-height: 500px; overflow-y: auto;">
                     <table id="countries-table" class="flight-table">
-                        <thead>
+                        <thead style="position: sticky; top: 0; background: white;">
                             <tr>
                                 <th>Pays</th>
                                 <th>Code OACI</th>
-                                <th>Prix</th>
-                                <th>Action</th>
+                                <th>Zone</th>
+                                <th>Prix / Périodes</th>
+                                <th>Actions</th>
                             </tr>
                         </thead>
                         <tbody>
@@ -146,6 +305,78 @@
                 <div class="panel-body">
                     <button id="btn-save-prices" class="btn btn-primary">Sauvegarder</button>
                     <button id="btn-close-prices" class="btn btn-secondary">Fermer</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Modal pour dupliquer une année -->
+        <div id="modal-duplicate-year" class="modal">
+            <div class="modal-content">
+                <span class="close-modal">&times;</span>
+                <h2>Dupliquer les prix vers une nouvelle année</h2>
+                <div class="form-group">
+                    <label for="input-target-year">Nouvelle année cible:</label>
+                    <input type="number" id="input-target-year" class="form-control" min="2020" max="2100" step="1">
+                </div>
+                <div class="panel-body">
+                    <button id="btn-confirm-duplicate" class="btn btn-primary">Dupliquer</button>
+                    <button id="btn-cancel-duplicate" class="btn btn-secondary">Annuler</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Input caché pour l'import de fichier Excel -->
+        <input type="file" id="file-import-prices" accept=".xlsx,.xls" style="display:none;">
+
+        <!-- Input caché pour l'import de fichier PDF -->
+        <input type="file" id="file-import-pdf" accept=".pdf" style="display:none;">
+
+        <!-- Modal pour l'import PDF -->
+        <div id="modal-import-pdf" class="modal">
+            <div class="modal-content">
+                <span class="close-modal">&times;</span>
+                <h2>Importer les barèmes depuis un PDF</h2>
+                <div class="form-group">
+                    <label for="pdf-year">Année des barèmes:</label>
+                    <input type="number" id="pdf-year" class="form-control" min="2020" max="2100" step="1">
+                </div>
+                <div class="form-group">
+                    <label style="display: flex; align-items: center; cursor: pointer;">
+                        <input type="checkbox" id="pdf-clear-existing" style="margin-right: 8px;">
+                        <span>Remplacer les prix existants pour cette année</span>
+                    </label>
+                </div>
+                <p style="font-size: 12px; color: #666;">
+                    💡 Le PDF doit contenir un tableau avec les colonnes: Pays, Date (optionnel), Montant
+                </p>
+                <div class="panel-body">
+                    <button id="btn-confirm-import-pdf" class="btn btn-primary">Importer</button>
+                    <button id="btn-cancel-import-pdf" class="btn btn-secondary">Annuler</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Modal pour ajouter une période de prix -->
+        <div id="modal-add-period" class="modal">
+            <div class="modal-content">
+                <span class="close-modal">&times;</span>
+                <h2>Ajouter une période de prix</h2>
+                <div class="form-group">
+                    <label for="period-country">Pays:</label>
+                    <input type="text" id="period-country" class="form-control" readonly>
+                    <input type="hidden" id="period-icao-prefix">
+                </div>
+                <div class="form-group">
+                    <label for="period-valid-from">Date de début (laisser vide = prix par défaut):</label>
+                    <input type="date" id="period-valid-from" class="form-control">
+                </div>
+                <div class="form-group">
+                    <label for="period-price">Prix (€):</label>
+                    <input type="number" id="period-price" class="form-control" step="0.01" min="0">
+                </div>
+                <div class="panel-body">
+                    <button id="btn-confirm-add-period" class="btn btn-primary">Ajouter</button>
+                    <button id="btn-cancel-add-period" class="btn btn-secondary">Annuler</button>
                 </div>
             </div>
         </div>
@@ -196,6 +427,90 @@
                 <div class="panel-body">
                     <button id="btn-confirm-edit-price" class="btn btn-primary">Modifier</button>
                     <button id="btn-cancel-edit-price" class="btn btn-secondary">Annuler</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Modal pour l'ajout manuel d'aéroport -->
+        <div id="modal-add-airport" class="modal">
+            <div class="modal-content">
+                <span class="close-modal">&times;</span>
+                <h2>Ajouter un aéroport manuellement</h2>
+                <div class="form-group">
+                    <label for="input-airport-icao">Code ICAO: <span style="color: red;">*</span></label>
+                    <input type="text" id="input-airport-icao" class="form-control" placeholder="Ex: LFPG" maxlength="4" style="text-transform: uppercase;">
+                </div>
+                <div class="form-group">
+                    <label for="input-airport-iata">Code IATA: <span style="color: red;">*</span></label>
+                    <input type="text" id="input-airport-iata" class="form-control" placeholder="Ex: CDG" maxlength="3" style="text-transform: uppercase;">
+                </div>
+                <div class="form-group">
+                    <label for="input-airport-name">Nom de l'aéroport: <span style="color: red;">*</span></label>
+                    <input type="text" id="input-airport-name" class="form-control" placeholder="Ex: PARIS CHARLES DE GAULLE">
+                </div>
+                <div class="form-group">
+                    <label for="input-airport-country">Pays: <span style="color: red;">*</span></label>
+                    <select id="input-airport-country" class="form-control">
+                        <option value="">-- Sélectionner un pays --</option>
+                        <!-- Les pays seront ajoutés dynamiquement -->
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label for="input-airport-type">Type:</label>
+                    <select id="input-airport-type" class="form-control">
+                        <option value="AD">AD - Aérodrome</option>
+                        <option value="AH">AH - Héliport alpin</option>
+                        <option value="HP">HP - Héliport</option>
+                        <option value="LS">LS - Piste</option>
+                        <option value="CA">CA - Aviation légère</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label for="input-airport-latitude">Latitude:</label>
+                    <input type="number" id="input-airport-latitude" class="form-control" step="0.000001" placeholder="Ex: 49.012779">
+                </div>
+                <div class="form-group">
+                    <label for="input-airport-longitude">Longitude:</label>
+                    <input type="number" id="input-airport-longitude" class="form-control" step="0.000001" placeholder="Ex: 2.550000">
+                </div>
+                <p style="font-size: 12px; color: #666; margin-top: 10px;">
+                    <span style="color: red;">*</span> Champs obligatoires
+                </p>
+                <div class="panel-body">
+                    <button id="btn-confirm-add-airport" class="btn btn-primary">Ajouter</button>
+                    <button id="btn-cancel-add-airport" class="btn btn-secondary">Annuler</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Modal pour l'import d'aéroports -->
+        <div id="modal-import-airports" class="modal">
+            <div class="modal-content">
+                <span class="close-modal">&times;</span>
+                <h2>Importer des aéroports</h2>
+                <p style="margin-bottom: 15px;">Importe les aéroports de type AD/AH avec code IATA depuis un fichier texte.</p>
+                <div class="form-group">
+                    <label for="file-airports-import">Fichier source (.txt):</label>
+                    <div class="file-input">
+                        <label class="file-input-label">
+                            <input type="file" id="file-airports-import" accept=".txt" style="display:none;">
+                            Parcourir...
+                        </label>
+                        <span id="file-airports-import-name" class="file-input-text">Aucun fichier sélectionné</span>
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label style="display: flex; align-items: center; cursor: pointer;">
+                        <input type="checkbox" id="clear-airports-before-import" style="margin-right: 8px;">
+                        <span>Effacer tous les aéroports existants avant l'import</span>
+                    </label>
+                </div>
+                <p style="font-size: 12px; color: #666; margin-top: 5px;">
+                    Par défaut, les aéroports sont ajoutés/mis à jour sans supprimer les existants.
+                </p>
+                <div class="panel-body">
+                    <button id="btn-confirm-import-airports" class="btn btn-primary" disabled>Importer</button>
+                    <button id="btn-cancel-import-airports" class="btn btn-secondary">Annuler</button>
                 </div>
             </div>
         </div>

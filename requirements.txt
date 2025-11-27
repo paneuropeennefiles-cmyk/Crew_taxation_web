@@ -1,4 +1,6 @@
 Flask>=2.2.3
-pandas
+pandas>=1.5.0
 xlrd
-openpyxl
+openpyxl>=3.0.0
+werkzeug>=2.2.0
+reportlab>=4.0.0
